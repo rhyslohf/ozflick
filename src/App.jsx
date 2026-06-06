@@ -861,26 +861,6 @@ export default function App() {
                   }}>{c.icon}</div>
                 )}
                 
-                {/* ── Category badge (inside image area) ── */}
-                {isActive && (
-                  <div className="ozb-badge" style={{
-                    position: "absolute", top: 12, left: 12, zIndex: 10,
-                  }}>
-                    <span style={{
-                      display: "inline-flex", alignItems: "center", gap: 5,
-                      padding: "4px 10px", borderRadius: 12,
-                      background: "rgba(0,0,0,.6)",
-                      border: `1px solid ${c.color}88`,
-                      color: c.color,
-                      fontSize: 10, fontWeight: 700, letterSpacing: .7,
-                      textTransform: "uppercase", fontFamily: "DM Sans, sans-serif",
-                      backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                    }}>
-                      <span style={{ fontSize: 12 }}>{c.icon}</span>
-                      {deal.categories[0] || "Deal"}
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* ── Bottom deal info ── */}
@@ -894,13 +874,33 @@ export default function App() {
                     textAlign: "left"
                   }}
                 >
-                  {/* Store name */}
-                  {deal.store && (
-                    <div style={{
-                      fontFamily: "Chakra Petch, sans-serif", fontSize: 11, letterSpacing: 1.8,
-                      color: "rgba(255,255,255,.38)", textTransform: "uppercase", marginBottom: 5,
-                    }}>@ {deal.store}</div>
-                  )}
+                  {/* Store & Category Badge */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 10, marginBottom: 8,
+                    flexWrap: "wrap"
+                  }}>
+                    {deal.store && (
+                      <div style={{
+                        fontFamily: "Chakra Petch, sans-serif", fontSize: 11, letterSpacing: 1.8,
+                        color: "rgba(255,255,255,.38)", textTransform: "uppercase",
+                      }}>@ {deal.store}</div>
+                    )}
+                    
+                    <div className="ozb-badge">
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 5,
+                        padding: "3px 8px", borderRadius: 8,
+                        background: `${c.color}15`,
+                        border: `1px solid ${c.color}44`,
+                        color: c.color,
+                        fontSize: 9, fontWeight: 700, letterSpacing: .5,
+                        textTransform: "uppercase", fontFamily: "DM Sans, sans-serif",
+                      }}>
+                        <span style={{ fontSize: 10 }}>{c.icon}</span>
+                        {deal.categories[0] || "Deal"}
+                      </span>
+                    </div>
+                  </div>
 
                   {/* Price & Title Row */}
                   <div style={{ marginBottom: 12 }}>
