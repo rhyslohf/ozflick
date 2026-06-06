@@ -8,8 +8,12 @@ export const handler = async (event) => {
     };
   }
 
-  // Validate that the URL is for OzBargain
-  if (!url.startsWith("https://www.ozbargain.com.au") && !url.startsWith("https://files.ozbargain.com.au")) {
+  // Validate that the URL is for OzBargain (allow both http and https)
+  const isOzBargain = 
+    url.includes("ozbargain.com.au") || 
+    url.startsWith("https://files.ozbargain.com.au");
+
+  if (!isOzBargain) {
     return {
       statusCode: 403,
       body: JSON.stringify({ error: "Only OzBargain URLs are allowed" }),
@@ -17,20 +21,29 @@ export const handler = async (event) => {
   }
 
   try {
+    // Some OzBargain pages require a more complete set of headers to avoid Cloudflare/bot detection
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "Cache-Control": "max-age=0",
       },
+      redirect: "follow",
     });
 
     if (!response.ok) {
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: `OzBargain returned status ${response.status}` }),
+        body: JSON.stringify({ 
+          error: `OzBargain returned status ${response.status}`,
+          url: url 
+        }),
       };
     }
 
@@ -39,9 +52,9 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
-        "Content-Type": response.headers.get("content-type") || "text/html; charset=utf-8",
+        "Content-Type": "text/html; charset=utf-8",
         "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=60", // Cache proxy responses for 60 seconds
+        "Cache-Control": "public, max-age=60",
       },
       body: body,
     };
@@ -49,7 +62,7 @@ export const handler = async (event) => {
     console.error("Proxy error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Failed to fetch from OzBargain" }),
+      body: JSON.stringify({ error: `Failed to fetch from OzBargain: ${error.message}` }),
     };
   }
 };
