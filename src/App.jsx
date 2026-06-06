@@ -4,12 +4,9 @@ import { useState, useEffect, useRef } from "react";
 const RSS = "https://www.ozbargain.com.au/deals/feed";
 
 const getProxiedUrl = (url) => {
-  if (import.meta.env.DEV) {
-    // In development, use the Vite proxy configured in vite.config.js
-    return url.replace("https://www.ozbargain.com.au", "/ozproxy");
-  }
-  // In production, use a more reliable public CORS proxy
-  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  // Use the Netlify Function proxy for both dev and production
+  // When running via 'netlify dev', this will be automatically handled.
+  return `/.netlify/functions/proxy?url=${encodeURIComponent(url)}`;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
