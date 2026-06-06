@@ -397,10 +397,11 @@ function CommentsPanel({ open, loading, items, title, onClose }) {
 
 function LoadingScreen() {
   return (
-    <div style={{
-      width: "100%", height: "100dvh", background: "#000",
+    <div className="ozb-card" style={{
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: "20px", textAlign: "center", gap: 30
+      background: "linear-gradient(135deg, #121212 0%, #000 100%)",
+      padding: "20px", textAlign: "center", gap: 30,
+      height: "100dvh",
     }}>
       <div style={{ position: "relative" }}>
         <div style={{ fontSize: 100, animation: "flamePulse 2s ease infinite" }}>🔥</div>
