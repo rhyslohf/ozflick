@@ -631,21 +631,30 @@ export default function App() {
       const filtered = parsed.filter(d => d.pubDate && d.pubDate > cutoff);
 
       // Identify if we are "Caught Up"
-      // Only caught up if ALL filtered deals have been viewed
       const known = getViewedIds();
-      const allSeen = filtered.length > 0 && filtered.every(d => known.has(d.nodeId));
+      
+      // Find the index of the last unread deal
+      let lastUnreadIdx = -1;
+      for (let i = 0; i < filtered.length; i++) {
+        if (!known.has(filtered[i].nodeId)) {
+          lastUnreadIdx = i;
+        }
+      }
 
-      let finalDeals = filtered;
-      if (allSeen) {
-        // Prepend "Caught Up" card
+      let finalDeals = [];
+      if (lastUnreadIdx === -1) {
+        // Everything is seen (or no deals)
         finalDeals = [
           { uid: "caught-up-separator", isCaughtUp: true, nodeId: "separator" },
           ...filtered
         ];
-      } else if (filtered.length === 0) {
-        // If no deals in 4h, show caught up anyway
+      } else {
+        // Insert separator after the last unread deal
+        // This means every deal AFTER this separator has been seen
         finalDeals = [
-          { uid: "caught-up-separator", isCaughtUp: true, nodeId: "separator" }
+          ...filtered.slice(0, lastUnreadIdx + 1),
+          { uid: "caught-up-separator", isCaughtUp: true, nodeId: "separator" },
+          ...filtered.slice(lastUnreadIdx + 1)
         ];
       }
 
