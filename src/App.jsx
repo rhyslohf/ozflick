@@ -222,7 +222,7 @@ function ActionButton({ icon, label, accentBg, accentBorder, onClick }) {
   );
 }
 
-function BottomNavbar({ onHomeClick }) {
+function BottomNavbar({ onTopClick }) {
   return (
     <div style={{
       position: "absolute", bottom: 0, left: 0, right: 0,
@@ -234,7 +234,7 @@ function BottomNavbar({ onHomeClick }) {
       paddingTop: 8,
     }}>
       <button 
-        onClick={onHomeClick}
+        onClick={onTopClick}
         style={{
           background: "none", border: "none", color: "#FF5900", cursor: "pointer",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
@@ -243,11 +243,11 @@ function BottomNavbar({ onHomeClick }) {
         onMouseDown={e => e.currentTarget.style.transform = "scale(0.9)"}
         onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
       >
-        <div style={{ fontSize: 26 }}>🏠</div>
+        <div style={{ fontSize: 26 }}>🔝</div>
         <span style={{ 
           fontSize: 10, fontFamily: "Oswald, sans-serif", fontWeight: 600, 
           letterSpacing: 1, textTransform: "uppercase" 
-        }}>Home</span>
+        }}>Back to Top</span>
       </button>
     </div>
   );
@@ -289,6 +289,47 @@ function HeroCard({ innerRef }) {
           fontFamily: "Oswald, sans-serif", fontSize: 11, letterSpacing: 3,
           color: "rgba(255,255,255,0.25)", textTransform: "uppercase"
         }}>Swipe up for deals</span>
+      </div>
+    </div>
+  );
+}
+
+function RefreshPlaceholderCard({ innerRef }) {
+  return (
+    <div className="ozb-card" ref={innerRef} style={{
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      background: "linear-gradient(135deg, #121212 0%, #000 100%)",
+      padding: "20px", textAlign: "center", gap: 30,
+      height: "100dvh",
+    }}>
+      <div style={{ position: "relative" }}>
+        <div style={{ fontSize: 100, animation: "flamePulse 2s ease infinite" }}>🔥</div>
+        <div style={{
+          position: "absolute", inset: -30, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,89,0,.2) 0%, transparent 70%)",
+          animation: "flamePulse 2s ease infinite",
+        }} />
+      </div>
+      <div style={{
+        fontFamily: "Chakra Petch, sans-serif", fontSize: 42, fontWeight: 700,
+        letterSpacing: 4, color: "#FF5900",
+        textShadow: "0 0 40px rgba(255,89,0,.4)",
+      }}>OZBARGAIN</div>
+      <div style={{
+        marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+      }}>
+        <div style={{
+          fontFamily: "Oswald, sans-serif", fontSize: 16, letterSpacing: 4,
+          color: "#fff", textTransform: "uppercase",
+        }}>Loading Latest Deals</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{
+              width: 8, height: 8, borderRadius: "50%", background: "#FF5900",
+              animation: `dotBounce 1.1s ease ${i * .18}s infinite`,
+            }} />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -532,40 +573,26 @@ export default function App() {
     }
   };
 
-  const goHome = async () => {
+  const refreshToTop = async () => {
     if (returning) return;
     setReturning(true);
     
-    // 1. Ensure hero is visible
-    setShowHero(true);
+    // 1. Prepend placeholder and ensure hero is hidden to focus on new deals
+    const placeholder = { uid: 'refresh-placeholder', isPlaceholder: true, nodeId: 'placeholder' };
+    setDeals(prev => [placeholder, ...prev]);
+    setShowHero(false);
 
-    // 2. Start refresh in background
-    const refreshPromise = loadFeed(true, true);
+    // 2. Smooth scroll to the placeholder at the top
+    // Small delay to ensure the placeholder is rendered before scrolling
+    setTimeout(() => {
+      feedRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, 10);
 
-    // 3. Smooth scroll to top
-    feedRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    // 3. Start refresh in background
+    // We wait for the feed to load
+    await loadFeed(true);
 
-    // 4. Artificial scrolling/waiting animation
-    // We want to wait for both the scroll to finish AND the refresh to finish
-    // A smooth scroll usually takes ~300-800ms depending on distance.
-    // If it reaches top before refresh is done, we keep pullY active.
-    
-    const startTime = Date.now();
-    
-    // Helper to check if we are at top
-    const checkTop = setInterval(() => {
-      if (feedRef.current && feedRef.current.scrollTop === 0) {
-        // If we hit top but still refreshing, add "artificial" scrolling animation via pullY
-        if (Date.now() - startTime > 300) { // minimum scroll time buffer
-          setPullY(Math.min(60, (Math.sin(Date.now() / 200) * 10) + 50));
-        }
-      }
-    }, 16);
-
-    await refreshPromise;
-    clearInterval(checkTop);
-
-    // 5. Cleanup
+    // 4. Cleanup
     setPullY(0);
     setReturning(false);
   };
@@ -584,14 +611,12 @@ export default function App() {
       (entries) => entries.forEach((e) => {
         if (e.isIntersecting) {
           if (e.target === heroRef.current) {
-            // Hero is active, do nothing special for now
+            // Hero is active
           } else {
             const i = cardRefs.current.findIndex((r) => r === e.target);
             if (i !== -1) {
               setActiveIdx(i);
               if (showHero) {
-                // Once we swipe to the first deal, hide the hero
-                // and snap the deal to the top.
                 setTimeout(() => setShowHero(false), 800);
               }
             }
@@ -617,7 +642,7 @@ export default function App() {
   // ── Lazily scrape deal page when card is active (600 ms debounce) ────────────
   useEffect(() => {
     const deal = deals[activeIdx];
-    if (!deal?.nodeId || cache.current[deal.nodeId] || pending.current.has(deal.nodeId)) return;
+    if (!deal?.nodeId || deal.isPlaceholder || cache.current[deal.nodeId] || pending.current.has(deal.nodeId)) return;
     const t = setTimeout(async () => {
       pending.current.add(deal.nodeId);
       try {
@@ -632,6 +657,7 @@ export default function App() {
 
   // ── Open comments panel ───────────────────────────────────────────────────────
   const openComments = async (deal) => {
+    if (deal.isPlaceholder) return;
     const title = deal.title.length > 38 ? `${deal.title.slice(0, 38)}…` : deal.title;
 
     if (cache.current[deal.nodeId]) {
@@ -798,6 +824,14 @@ export default function App() {
       >
         {showHero && <HeroCard innerRef={heroRef} />}
         {deals.map((deal, i) => {
+          if (deal.isPlaceholder) {
+            return (
+              <RefreshPlaceholderCard 
+                key={deal.uid} 
+                innerRef={(el) => (cardRefs.current[i] = el)} 
+              />
+            );
+          }
           const m          = meta[deal.nodeId] || {};
           const c          = getCat(deal.categories[0]);
           const isActive   = (i === activeIdx);
@@ -969,7 +1003,7 @@ export default function App() {
       </div>
 
       {/* ── Bottom Navbar ── */}
-      {!showHero && <BottomNavbar onHomeClick={goHome} />}
+      {!showHero && <BottomNavbar onTopClick={refreshToTop} />}
 
       {/* ── Comments panel ── */}
       <CommentsPanel
