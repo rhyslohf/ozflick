@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const RSS = "https://www.ozbargain.com.au/deals/feed";
+const VIEWED_DEALS_KEY = "ozb_viewed_deals";
+const MAX_VIEWED_DEALS = 500;
 
 const getProxiedUrl = (url) => {
   // Use the Netlify Function proxy for both dev and production
@@ -14,6 +16,24 @@ const getNodeId  = (url) => url?.match(/\/node\/(\d+)/)?.[1] || null;
 const rawImgUrl  = (id)  => id
   ? `https://files.ozbargain.com.au/n/${String(id).slice(-2)}/${id}.jpg`
   : null;
+
+const getViewedIds = () => {
+  try {
+    const stored = localStorage.getItem(VIEWED_DEALS_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const saveViewedIds = (ids) => {
+  try {
+    const arr = Array.from(ids).slice(-MAX_VIEWED_DEALS);
+    localStorage.setItem(VIEWED_DEALS_KEY, JSON.stringify(arr));
+  } catch (e) {
+    console.error("Failed to save viewed deals", e);
+  }
+};
 
 const CATS = {
   "Gaming":                   { icon: "🎮", color: "#7c3aed" },
@@ -294,6 +314,53 @@ function HeroCard({ innerRef }) {
   );
 }
 
+function CaughtUpCard({ innerRef, onReset }) {
+  return (
+    <div className="ozb-card" ref={innerRef} style={{
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      background: "linear-gradient(135deg, #121212 0%, #000 100%)",
+      padding: "20px", textAlign: "center", gap: 30,
+      height: "100dvh",
+    }}>
+      <div style={{ position: "relative" }}>
+        <div style={{ fontSize: 100 }}>✅</div>
+        <div style={{
+          position: "absolute", inset: -30, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(16,185,129,.15) 0%, transparent 70%)",
+        }} />
+      </div>
+      <div style={{
+        fontFamily: "Chakra Petch, sans-serif", fontSize: 32, fontWeight: 700,
+        letterSpacing: 2, color: "#10b981",
+        textShadow: "0 0 40px rgba(16,185,129,.3)",
+      }}>YOU'RE CAUGHT UP</div>
+      <div style={{
+        fontFamily: "DM Sans, sans-serif", fontSize: 15, color: "rgba(255,255,255,0.5)",
+        maxWidth: 280, lineHeight: 1.6, letterSpacing: 0.5, fontWeight: 400
+      }}>
+        You've seen all the latest deals. Scroll down to see older bargains you might have missed.
+      </div>
+      <div style={{
+        marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+        animation: "swipeHint 2s infinite"
+      }}>
+        <span style={{ fontSize: 24, color: "rgba(16,185,129,0.5)" }}>↓</span>
+      </div>
+      {onReset && (
+        <button 
+          onClick={onReset}
+          style={{
+            marginTop: 20, background: "none", border: "1px solid rgba(255,255,255,0.1)",
+            color: "rgba(255,255,255,0.3)", padding: "8px 16px", borderRadius: 20,
+            fontSize: 11, fontFamily: "Oswald, sans-serif", letterSpacing: 1,
+            cursor: "pointer"
+          }}
+        >MARK ALL AS UNREAD</button>
+      )}
+    </div>
+  );
+}
+
 function RefreshPlaceholderCard({ innerRef }) {
   return (
     <div className="ozb-card" ref={innerRef} style={{
@@ -537,6 +604,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [showHero,   setShowHero]   = useState(true);
   const [returning,  setReturning]  = useState(false);
+  const [viewedIds,  setViewedIds]  = useState(getViewedIds());
 
   const feedRef  = useRef(null);
   const cardRefs = useRef([]);
@@ -557,13 +625,39 @@ export default function App() {
       const parsed = parseRSS(xml);
       if (!parsed.length) throw new Error("RSS parsed but returned no deals.");
 
+      // Identify where to insert "Caught Up"
+      // It goes before the first deal that is already in viewedIds
+      const known = getViewedIds();
+      let caughtUpIdx = -1;
+      for (let i = 0; i < parsed.length; i++) {
+        if (known.has(parsed[i].nodeId)) {
+          caughtUpIdx = i;
+          break;
+        }
+      }
+
+      let finalDeals = parsed;
+      if (caughtUpIdx !== -1) {
+        // Insert separator
+        finalDeals = [
+          ...parsed.slice(0, caughtUpIdx),
+          { uid: "caught-up-separator", isCaughtUp: true, nodeId: "separator" },
+          ...parsed.slice(caughtUpIdx)
+        ];
+      } else {
+        // If everything is new, we don't show the separator unless 
+        // there are NO deals or something? 
+        // Actually if everything is new, caughtUpIdx is -1. 
+        // But if the user has SEEN everything, caughtUpIdx is 0.
+      }
+
       // Artificial delay to make the loading state obvious (min 800ms)
       const elapsed = Date.now() - startTime;
       if (elapsed < 800) {
         await new Promise(resolve => setTimeout(resolve, 800 - elapsed));
       }
 
-      setDeals(parsed);
+      setDeals(finalDeals);
       setStatus("ok");
       if (isRefresh) {
         setActiveIdx(0);
@@ -579,6 +673,13 @@ export default function App() {
       setRefreshing(false);
       setPullY(0);
     }
+  };
+
+  const resetViewed = () => {
+    const empty = new Set();
+    saveViewedIds(empty);
+    setViewedIds(empty);
+    loadFeed(true, true);
   };
 
   const refreshToTop = async () => {
@@ -624,6 +725,19 @@ export default function App() {
             const i = cardRefs.current.findIndex((r) => r === e.target);
             if (i !== -1) {
               setActiveIdx(i);
+              
+              // Mark as viewed
+              const deal = deals[i];
+              if (deal && deal.nodeId && !deal.isPlaceholder && !deal.isCaughtUp) {
+                setViewedIds((prev) => {
+                  if (prev.has(deal.nodeId)) return prev;
+                  const next = new Set(prev);
+                  next.add(deal.nodeId);
+                  saveViewedIds(next);
+                  return next;
+                });
+              }
+
               if (showHero) {
                 setTimeout(() => setShowHero(false), 800);
               }
@@ -665,7 +779,7 @@ export default function App() {
 
   // ── Open comments panel ───────────────────────────────────────────────────────
   const openComments = async (deal) => {
-    if (deal.isPlaceholder) return;
+    if (deal.isPlaceholder || deal.isCaughtUp) return;
     const title = deal.title.length > 38 ? `${deal.title.slice(0, 38)}…` : deal.title;
 
     if (cache.current[deal.nodeId]) {
@@ -837,6 +951,15 @@ export default function App() {
               <RefreshPlaceholderCard 
                 key={deal.uid} 
                 innerRef={(el) => (cardRefs.current[i] = el)} 
+              />
+            );
+          }
+          if (deal.isCaughtUp) {
+            return (
+              <CaughtUpCard 
+                key={deal.uid}
+                innerRef={(el) => (cardRefs.current[i] = el)}
+                onReset={resetViewed}
               />
             );
           }
