@@ -696,8 +696,6 @@ export default function App() {
       overflow: "hidden", position: "relative",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Chakra+Petch:wght@600;700&display=swap');
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         .ozb-feed {

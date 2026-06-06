@@ -1,10 +1,78 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-AU">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>ozbargain-feed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Fonts — preconnect + preload to avoid render-blocking -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style"
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Chakra+Petch:wght@600;700&display=swap" />
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Chakra+Petch:wght@600;700&display=swap" />
+
+    <!-- Primary SEO -->
+    <title>OzFlick — Swipe Australia's Hottest Deals</title>
+    <meta name="description"
+      content="Scroll through Australia's best deals TikTok-style. OzFlick turns the OzBargain feed into a swipeable full-screen experience — price drops, tech deals, groceries and more, updated live." />
+    <meta name="keywords"
+      content="OzBargain, Australian deals, bargains, price drops, cheap deals Australia, deal finder, savings, discount" />
+    <meta name="author"   content="OzFlick" />
+    <meta name="robots"   content="index, follow" />
+    <meta name="language" content="en-AU" />
+    <link rel="canonical" href="https://ozflick.com.au" />
+
+    <!-- Open Graph -->
+    <meta property="og:type"         content="website" />
+    <meta property="og:url"          content="https://ozflick.com.au" />
+    <meta property="og:site_name"    content="OzFlick" />
+    <meta property="og:title"        content="OzFlick — Swipe Australia's Hottest Deals" />
+    <meta property="og:description"
+      content="TikTok-style deal discovery for Australians. Swipe through live bargains from OzBargain — electronics, travel, groceries, gaming and more." />
+    <meta property="og:image"        content="https://ozflick.com.au/og-image.png" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt"    content="OzFlick — swipe through Australia's best deals" />
+    <meta property="og:locale"       content="en_AU" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="OzFlick — Swipe Australia's Hottest Deals" />
+    <meta name="twitter:description"
+      content="TikTok-style deal discovery. Swipe live bargains from OzBargain — electronics, travel, groceries and more." />
+    <meta name="twitter:image"       content="https://ozflick.com.au/og-image.png" />
+    <meta name="twitter:image:alt"   content="OzFlick app screenshot" />
+
+    <!-- Icons + manifest -->
+    <link rel="icon"             href="/favicon.ico" sizes="any" />
+    <link rel="icon"             href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest"         href="/site.webmanifest" />
+
+    <!-- Browser / OS chrome theming -->
+    <meta name="theme-color"                        content="#FF5900" />
+    <meta name="apple-mobile-web-app-capable"       content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title"         content="OzFlick" />
+    <meta name="msapplication-TileColor"            content="#FF5900" />
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "OzFlick",
+      "url": "https://ozflick.com.au",
+      "description": "TikTok-style deal discovery app for Australian bargain hunters. Powered by the OzBargain live RSS feed.",
+      "applicationCategory": "ShoppingApplication",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": "en-AU",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "AUD" },
+      "author": { "@type": "Organization", "name": "OzFlick" }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
