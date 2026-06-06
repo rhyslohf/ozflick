@@ -214,11 +214,12 @@ function BottomNavbar({ onHomeClick }) {
   return (
     <div style={{
       position: "absolute", bottom: 0, left: 0, right: 0,
-      height: 70, background: "rgba(6,6,6,0.92)",
+      minHeight: 70, background: "rgba(6,6,6,0.92)",
       display: "flex", justifyContent: "center", alignItems: "center",
       zIndex: 100, borderTop: "1px solid rgba(255,255,255,0.08)",
       backdropFilter: "blur(15px)", WebkitBackdropFilter: "blur(15px)",
-      paddingBottom: "env(safe-area-inset-bottom)",
+      paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+      paddingTop: 8,
     }}>
       <button 
         onClick={onHomeClick}
@@ -245,7 +246,8 @@ function HeroCard({ innerRef }) {
     <div className="ozb-card" ref={innerRef} style={{
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       background: "linear-gradient(135deg, #121212 0%, #000 100%)",
-      padding: "20px", textAlign: "center", gap: 30
+      padding: "20px", textAlign: "center", gap: 30,
+      height: "100dvh",
     }}>
       <div style={{ position: "relative" }}>
         <div style={{ fontSize: 100, animation: "flamePulse 2s ease infinite" }}>🔥</div>
@@ -384,7 +386,7 @@ function CommentsPanel({ open, loading, items, title, onClose }) {
 function LoadingScreen() {
   return (
     <div style={{
-      width: "100%", height: "100vh", background: "#000",
+      width: "100%", height: "100dvh", background: "#000",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       padding: "20px", textAlign: "center", gap: 30
     }}>
@@ -430,7 +432,7 @@ function LoadingScreen() {
 function ErrorScreen({ error }) {
   return (
     <div style={{
-      width: "100%", height: "100vh", background: "#000",
+      width: "100%", height: "100dvh", background: "#000",
       display: "flex", alignItems: "center", justifyContent: "center",
       flexDirection: "column", gap: 18, padding: "0 36px", textAlign: "center",
     }}>
@@ -678,7 +680,7 @@ export default function App() {
 
   return (
     <div style={{
-      width: "100%", height: "100vh", background: "#000",
+      width: "100%", height: "100dvh", background: "#000",
       overflow: "hidden", position: "relative",
     }}>
       <style>{`
@@ -687,7 +689,7 @@ export default function App() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         .ozb-feed {
-          height: 100vh;
+          height: 100dvh;
           overflow-y: scroll;
           scroll-snap-type: y mandatory;
           scrollbar-width: none;
@@ -698,7 +700,7 @@ export default function App() {
         .ozb-feed::-webkit-scrollbar { display: none; }
 
         .ozb-card {
-          height: 100vh;
+          height: 100dvh;
           scroll-snap-align: start;
           scroll-snap-stop: always;
           position: relative;
@@ -740,7 +742,7 @@ export default function App() {
       {/* ── Refresh Indicator Overlay ── */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0,
-        height: "100vh",
+        height: "100dvh",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start",
         paddingTop: "15vh",
         zIndex: 40, pointerEvents: "none",
