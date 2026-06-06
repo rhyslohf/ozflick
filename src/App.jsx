@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 const RSS = "https://www.ozbargain.com.au/deals/feed";
 const VIEWED_DEALS_KEY = "ozb_viewed_deals";
 const MAX_VIEWED_DEALS = 500;
+const FILTER_HOURS = 4;
 
 const getProxiedUrl = (url) => {
   // Use the Netlify Function proxy for both dev and production
@@ -625,30 +626,27 @@ export default function App() {
       const parsed = parseRSS(xml);
       if (!parsed.length) throw new Error("RSS parsed but returned no deals.");
 
-      // Identify where to insert "Caught Up"
-      // It goes before the first deal that is already in viewedIds
-      const known = getViewedIds();
-      let caughtUpIdx = -1;
-      for (let i = 0; i < parsed.length; i++) {
-        if (known.has(parsed[i].nodeId)) {
-          caughtUpIdx = i;
-          break;
-        }
-      }
+      // Filter to last 4 hours
+      const cutoff = new Date(Date.now() - FILTER_HOURS * 60 * 60 * 1000);
+      const filtered = parsed.filter(d => d.pubDate && d.pubDate > cutoff);
 
-      let finalDeals = parsed;
-      if (caughtUpIdx !== -1) {
-        // Insert separator
+      // Identify if we are "Caught Up"
+      // Only caught up if ALL filtered deals have been viewed
+      const known = getViewedIds();
+      const allSeen = filtered.length > 0 && filtered.every(d => known.has(d.nodeId));
+
+      let finalDeals = filtered;
+      if (allSeen) {
+        // Prepend "Caught Up" card
         finalDeals = [
-          ...parsed.slice(0, caughtUpIdx),
           { uid: "caught-up-separator", isCaughtUp: true, nodeId: "separator" },
-          ...parsed.slice(caughtUpIdx)
+          ...filtered
         ];
-      } else {
-        // If everything is new, we don't show the separator unless 
-        // there are NO deals or something? 
-        // Actually if everything is new, caughtUpIdx is -1. 
-        // But if the user has SEEN everything, caughtUpIdx is 0.
+      } else if (filtered.length === 0) {
+        // If no deals in 4h, show caught up anyway
+        finalDeals = [
+          { uid: "caught-up-separator", isCaughtUp: true, nodeId: "separator" }
+        ];
       }
 
       // Artificial delay to make the loading state obvious (min 800ms)
