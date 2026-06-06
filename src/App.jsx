@@ -146,7 +146,10 @@ async function scrapeDealPage(url) {
 
   // Parse comments
   // OzBargain comments are usually in a div with id="comments" and have class .comment
-  const comments = Array.from(doc.querySelectorAll(".comment")).map((el) => {
+  // Use a Map to deduplicate by comment ID (if available) or content hash
+  const commentsMap = new Map();
+
+  Array.from(doc.querySelectorAll(".comment")).forEach((el) => {
     const authorEl = el.querySelector(".submitted a, .username, [class*='author']");
     const author = (authorEl?.textContent || "OzBargainer").trim().replace(/^\s*by\s*/i, "");
 
@@ -164,12 +167,21 @@ async function scrapeDealPage(url) {
       }
     }
 
+    if (!text || text.length <= 2) return;
+
     // Try to get a timestamp
     const dateEl = el.querySelector(".date, .submitted, time, .comment-date");
     const date   = dateEl?.textContent?.replace(/^\s*by .+? on\s*/i, "").trim() || "";
 
-    return { author, text: text.slice(0, 800), date };
-  }).filter((c) => c.text.length > 2);
+    // Use element ID as key, or fallback to author+text+date hash
+    const commentId = el.id || `${author}|${text.slice(0, 100)}|${date}`;
+    
+    if (!commentsMap.has(commentId)) {
+      commentsMap.set(commentId, { author, text: text.slice(0, 800), date });
+    }
+  });
+
+  const comments = Array.from(commentsMap.values());
 
   return { ogImage, votes, commentCount, comments };
 }
