@@ -550,11 +550,19 @@ export default function App() {
     else setStatus("loading");
 
     try {
+      const startTime = Date.now();
       const r = await fetch(getProxiedUrl(RSS));
       if (!r.ok) throw new Error(`Fetch failed (HTTP ${r.status}). OzBargain may be blocking the request.`);
       const xml = await r.text();
       const parsed = parseRSS(xml);
       if (!parsed.length) throw new Error("RSS parsed but returned no deals.");
+
+      // Artificial delay to make the loading state obvious (min 800ms)
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 800) {
+        await new Promise(resolve => setTimeout(resolve, 800 - elapsed));
+      }
+
       setDeals(parsed);
       setStatus("ok");
       if (isRefresh) {
