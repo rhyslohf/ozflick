@@ -102,7 +102,11 @@ function parseRSS(xml) {
 // ─── Deal Page Scraper (votes, comment count, better image, comments) ─────────
 async function scrapeDealPage(url) {
   const res  = await fetch(getProxiedUrl(url));
+  if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
+  
   const html = await res.text();
+  if (!html || html.length < 100) throw new Error("Received empty or too short HTML");
+  
   const doc  = new DOMParser().parseFromString(html, "text/html");
 
   // og:image has the correct hash baked in
@@ -141,24 +145,30 @@ async function scrapeDealPage(url) {
   }
 
   // Parse comments
+  // OzBargain comments are usually in a div with id="comments" and have class .comment
   const comments = Array.from(doc.querySelectorAll(".comment")).map((el) => {
-    const author = (
-      el.querySelector(".submitted a")?.textContent ||
-      el.querySelector(".username")?.textContent ||
-      el.querySelector("[class*='author']")?.textContent ||
-      "OzBargainer"
-    ).trim().replace(/^\s*by\s*/i, "");
+    const authorEl = el.querySelector(".submitted a, .username, [class*='author']");
+    const author = (authorEl?.textContent || "OzBargainer").trim().replace(/^\s*by\s*/i, "");
 
-    const contentSelectors = [".field-item", ".comment-body", ".content p", ".content"];
-    const text = contentSelectors
-      .map((s) => el.querySelector(s)?.textContent?.trim())
-      .find((t) => t && t.length > 0) || "";
+    const contentSelectors = [
+      ".field-item", ".comment-body", ".content p", ".content", 
+      ".comment-content", ".field-name-comment-body"
+    ];
+    
+    let text = "";
+    for (const sel of contentSelectors) {
+      const found = el.querySelector(sel);
+      if (found) {
+        text = found.textContent?.trim() || "";
+        if (text) break;
+      }
+    }
 
     // Try to get a timestamp
-    const dateEl = el.querySelector(".date, .submitted, time");
+    const dateEl = el.querySelector(".date, .submitted, time, .comment-date");
     const date   = dateEl?.textContent?.replace(/^\s*by .+? on\s*/i, "").trim() || "";
 
-    return { author, text: text.slice(0, 500), date };
+    return { author, text: text.slice(0, 800), date };
   }).filter((c) => c.text.length > 2);
 
   return { ogImage, votes, commentCount, comments };
