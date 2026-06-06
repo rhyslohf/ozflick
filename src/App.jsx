@@ -470,6 +470,7 @@ export default function App() {
   const [pullY,      setPullY]      = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [showHero,   setShowHero]   = useState(true);
+  const [returning,  setReturning]  = useState(false);
 
   const feedRef  = useRef(null);
   const cardRefs = useRef([]);
@@ -478,7 +479,7 @@ export default function App() {
   const pending  = useRef(new Set());
   const touch    = useRef({ startY: 0, pulling: false });
 
-  const loadFeed = async (isRefresh = false) => {
+  const loadFeed = async (isRefresh = false, keepHero = false) => {
     if (isRefresh) setRefreshing(true);
     else setStatus("loading");
 
@@ -492,8 +493,10 @@ export default function App() {
       setStatus("ok");
       if (isRefresh) {
         setActiveIdx(0);
-        setShowHero(false); // After refresh, go straight to deals
-        feedRef.current?.scrollTo({ top: 0 });
+        if (!keepHero) {
+          setShowHero(false); // After refresh, go straight to deals
+          feedRef.current?.scrollTo({ top: 0 });
+        }
       }
     } catch (e) {
       setErrMsg(e.message || String(e));
@@ -502,6 +505,44 @@ export default function App() {
       setRefreshing(false);
       setPullY(0);
     }
+  };
+
+  const goHome = async () => {
+    if (returning) return;
+    setReturning(true);
+    
+    // 1. Ensure hero is visible
+    setShowHero(true);
+
+    // 2. Start refresh in background
+    const refreshPromise = loadFeed(true, true);
+
+    // 3. Smooth scroll to top
+    feedRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+
+    // 4. Artificial scrolling/waiting animation
+    // We want to wait for both the scroll to finish AND the refresh to finish
+    // A smooth scroll usually takes ~300-800ms depending on distance.
+    // If it reaches top before refresh is done, we keep pullY active.
+    
+    const startTime = Date.now();
+    
+    // Helper to check if we are at top
+    const checkTop = setInterval(() => {
+      if (feedRef.current && feedRef.current.scrollTop === 0) {
+        // If we hit top but still refreshing, add "artificial" scrolling animation via pullY
+        if (Date.now() - startTime > 300) { // minimum scroll time buffer
+          setPullY(Math.min(60, (Math.sin(Date.now() / 200) * 10) + 50));
+        }
+      }
+    }, 16);
+
+    await refreshPromise;
+    clearInterval(checkTop);
+
+    // 5. Cleanup
+    setPullY(0);
+    setReturning(false);
   };
 
   // ── Initial Fetch ────────────────────────────────────────────────────────────
@@ -905,7 +946,7 @@ export default function App() {
       </div>
 
       {/* ── Bottom Navbar ── */}
-      {!showHero && <BottomNavbar onHomeClick={() => loadFeed(true)} />}
+      {!showHero && <BottomNavbar onHomeClick={goHome} />}
 
       {/* ── Comments panel ── */}
       <CommentsPanel
