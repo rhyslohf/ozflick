@@ -9,7 +9,7 @@ const getProxiedUrl = (url) => {
     return url.replace("https://www.ozbargain.com.au", "/ozproxy");
   }
   // In production, use a more reliable public CORS proxy
-  return `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
