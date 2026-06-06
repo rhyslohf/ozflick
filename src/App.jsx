@@ -374,36 +374,44 @@ function CommentsPanel({ open, loading, items, title, onClose }) {
 function LoadingScreen() {
   return (
     <div style={{
-      width: "100%", height: "100vh", background: "#080808",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      flexDirection: "column", gap: 28,
+      width: "100%", height: "100vh", background: "#000",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      padding: "20px", textAlign: "center", gap: 30
     }}>
       <div style={{ position: "relative" }}>
-        <div style={{ fontSize: 80, animation: "flamePulse 1.4s ease infinite" }}>🔥</div>
+        <div style={{ fontSize: 100, animation: "flamePulse 2s ease infinite" }}>🔥</div>
         <div style={{
-          position: "absolute", inset: -20, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255,89,0,.18) 0%, transparent 70%)",
-          animation: "flamePulse 1.4s ease infinite",
+          position: "absolute", inset: -30, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,89,0,.2) 0%, transparent 70%)",
+          animation: "flamePulse 2s ease infinite",
         }} />
       </div>
       <div style={{
-        fontFamily: "Chakra Petch, sans-serif", fontSize: 24, fontWeight: 700,
-        letterSpacing: 6, color: "#FF5900",
-        textShadow: "0 0 30px rgba(255,89,0,.5)",
+        fontFamily: "Chakra Petch, sans-serif", fontSize: 42, fontWeight: 700,
+        letterSpacing: 4, color: "#FF5900",
+        textShadow: "0 0 40px rgba(255,89,0,.4)",
       }}>OZBARGAIN</div>
       <div style={{
-        fontFamily: "DM Sans, sans-serif", fontSize: 13, letterSpacing: 2,
-        color: "rgba(255,255,255,.3)", textTransform: "uppercase",
-      }}>Fetching the hottest deals…</div>
-      <div style={{
-        display: "flex", gap: 6, marginTop: 8,
+        fontFamily: "DM Sans, sans-serif", fontSize: 15, color: "rgba(255,255,255,0.5)",
+        maxWidth: 280, lineHeight: 1.6, letterSpacing: 0.5, fontWeight: 400
       }}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} style={{
-            width: 7, height: 7, borderRadius: "50%", background: "#FF5900",
-            animation: `dotBounce 1.1s ease ${i * .18}s infinite`,
-          }} />
-        ))}
+        The hottest deals from the OzBargain community, delivered in a whole new way.
+      </div>
+      <div style={{
+        marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+      }}>
+        <div style={{
+          fontFamily: "Oswald, sans-serif", fontSize: 13, letterSpacing: 3,
+          color: "#FF5900", textTransform: "uppercase",
+        }}>Loading deals</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{
+              width: 8, height: 8, borderRadius: "50%", background: "#FF5900",
+              animation: `dotBounce 1.1s ease ${i * .18}s infinite`,
+            }} />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -412,7 +420,7 @@ function LoadingScreen() {
 function ErrorScreen({ error }) {
   return (
     <div style={{
-      width: "100%", height: "100vh", background: "#080808",
+      width: "100%", height: "100vh", background: "#000",
       display: "flex", alignItems: "center", justifyContent: "center",
       flexDirection: "column", gap: 18, padding: "0 36px", textAlign: "center",
     }}>
@@ -619,7 +627,7 @@ export default function App() {
 
   return (
     <div style={{
-      width: "100%", height: "100vh", background: "#080808",
+      width: "100%", height: "100vh", background: "#000",
       overflow: "hidden", position: "relative",
     }}>
       <style>{`
@@ -644,7 +652,7 @@ export default function App() {
           scroll-snap-stop: always;
           position: relative;
           overflow: hidden;
-          background: #060606;
+          background: #000;
         }
 
         @keyframes slideUp {
@@ -897,7 +905,7 @@ export default function App() {
       </div>
 
       {/* ── Bottom Navbar ── */}
-      <BottomNavbar onHomeClick={() => loadFeed(true)} />
+      {!showHero && <BottomNavbar onHomeClick={() => loadFeed(true)} />}
 
       {/* ── Comments panel ── */}
       <CommentsPanel
